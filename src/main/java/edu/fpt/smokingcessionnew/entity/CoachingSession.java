@@ -1,0 +1,44 @@
+package edu.fpt.smokingcessionnew.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.Instant;
+
+@Getter
+@Setter
+@Entity
+public class CoachingSession {
+    @Id
+    @Column(name = "session_id", nullable = false)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private User member;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coach_id")
+    private User coach;
+
+    @Column(name = "session_type")
+    private Integer sessionType;
+
+    @Column(name = "scheduled_time")
+    private Instant scheduledTime;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "status")
+    private Integer status;
+
+    @Lob
+    @Column(name = "notes")
+    private String notes;
+
+    @Column(name = "created_date")
+    private Instant createdDate;
+
+}
