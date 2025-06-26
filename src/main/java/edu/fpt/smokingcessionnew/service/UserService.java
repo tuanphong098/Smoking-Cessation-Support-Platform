@@ -8,8 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -169,5 +170,89 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng với email này");
         }
         return ResponseEntity.ok(userOptional.get());
+    }
+
+    /**
+     * Phương thức đặt lại mật khẩu cho người dùng (chỉ dành cho Admin)
+     * @param userId ID của người dùng cần đặt lại mật khẩu
+     * @return ResponseEntity chứa kết quả và mật khẩu tạm thời
+     */
+    public ResponseEntity<?> resetUserPassword(Integer userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng với ID: " + userId);
+        }
+
+        User user = userOptional.get();
+
+        // Tạo mật khẩu tạm thời
+        String temporaryPassword = generateTemporaryPassword();
+
+        // Mã hóa và lưu mật khẩu mới
+        user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
+        userRepository.save(user);
+
+        // Trong môi trường thực tế, gửi email thông báo cho người dùng
+        try {
+            // Gửi email với mật khẩu tạm thời
+            // emailService.sendPasswordResetEmail(user.getEmail(), temporaryPassword, user.getFullName());
+
+            // Trả về thông tin cho admin
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "Đã đặt lại mật khẩu cho người dùng thành công");
+            result.put("userId", userId);
+            result.put("email", user.getEmail());
+            result.put("temporaryPassword", temporaryPassword);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Đặt lại mật khẩu thất bại: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Tạo mật khẩu tạm thời ngẫu nhiên
+     * @return Mật khẩu tạm thời
+     */
+    private String generateTemporaryPassword() {
+        // Các ký tự cho mật khẩu
+        String upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lowerChars = "abcdefghijklmnopqrstuvwxyz";
+        String numbers = "0123456789";
+        String specialChars = "!@#$%^&*()_-+=<>?";
+
+        String allChars = upperChars + lowerChars + numbers + specialChars;
+
+        // Tạo mật khẩu với độ dài 10 ký tự
+        StringBuilder password = new StringBuilder();
+
+        // Đảm bảo có ít nhất 1 ký tự viết hoa
+        password.append(upperChars.charAt((int) (Math.random() * upperChars.length())));
+
+        // Đảm bảo có ít nhất 1 ký tự viết thường
+        password.append(lowerChars.charAt((int) (Math.random() * lowerChars.length())));
+
+        // Đảm bảo có ít nhất 1 số
+        password.append(numbers.charAt((int) (Math.random() * numbers.length())));
+
+        // Đảm bảo có ít nhất 1 ký tự đặc biệt
+        password.append(specialChars.charAt((int) (Math.random() * specialChars.length())));
+
+        // Thêm 6 ký tự ngẫu nhiên nữa
+        for (int i = 0; i < 6; i++) {
+            password.append(allChars.charAt((int) (Math.random() * allChars.length())));
+        }
+
+        // Trộn các ký tự để tránh việc có mẫu cố định
+        char[] passwordArray = password.toString().toCharArray();
+        for (int i = 0; i < passwordArray.length; i++) {
+            int randomIndex = (int) (Math.random() * passwordArray.length);
+            char temp = passwordArray[i];
+            passwordArray[i] = passwordArray[randomIndex];
+            passwordArray[randomIndex] = temp;
+        }
+
+        return new String(passwordArray);
     }
 }

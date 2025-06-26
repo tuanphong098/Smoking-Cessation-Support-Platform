@@ -3,9 +3,10 @@ package edu.fpt.smokingcessionnew.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 @Getter
 @Setter
@@ -15,18 +16,21 @@ public class Achievement {
     @Column(name = "achievement_id", nullable = false)
     private Integer id;
 
+    @Size(max = 255)
+    @Nationalized
     @Column(name = "achievement_name")
     private String achievementName;
 
-    @Lob
-    @Column(name = "description")
+    @Nationalized
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
+    @Size(max = 255)
     @Column(name = "icon_url")
     private String iconUrl;
 
-    @Lob
-    @Column(name = "criteria")
+    @Nationalized
+    @Column(name = "criteria", columnDefinition = "NVARCHAR(MAX)")
     private String criteria;
 
     @Column(name = "points_reward")

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả thanh toán - Ứng dụng Cai thuốc lá</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .success-header {
+            color: #2e8540;
+            border-bottom: 2px solid #2e8540;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .error-header {
+            color: #d83933;
+            border-bottom: 2px solid #d83933;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .icon {
+            font-size: 72px;
+            margin-bottom: 1rem;
+        }
+        .success-icon {
+            color: #2e8540;
+        }
+        .error-icon {
+            color: #d83933;
+        }
+        .details {
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        .details p {
+            margin: 0.5rem 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+        .button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+        .button:hover {
+            background-color: #0063ad;
+        }
+        .support-info {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #ccc;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .error-details {
+            background-color: #fff8f8;
+            border-left: 4px solid #d83933;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Successful Payment -->
+        <div th:if="${status == 'success'}">
+            <h1 class="success-header">Thanh toán thành công</h1>
+            <div class="icon success-icon">✓</div>
+            <p>Cảm ơn bạn đã thanh toán. Gói thành viên của bạn đã được kích hoạt.</p>
+
+            <div class="details">
+                <p><span class="label">Mã giao dịch:</span> <span th:text="${transactionId}">TXN123456</span></p>
+                <p><span class="label">Số tiền:</span> <span th:text="${#numbers.formatDecimal(amount/100, 0, 'COMMA', 0, 'POINT')}">100,000</span> VNĐ</p>
+                <p><span class="label">Thông tin đơn hàng:</span> <span th:text="${orderInfo}">Thanh toán gói thành viên</span></p>
+                <p><span class="label">Thời gian:</span> <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm:ss')}">01/01/2023 12:34:56</span></p>
+            </div>
+
+            <a href="/dashboard" class="button">Quay về trang chủ</a>
+        </div>
+
+        <!-- Failed Payment -->
+        <div th:if="${status == 'failed'}">
+            <h1 class="error-header">Thanh toán không thành công</h1>
+            <div class="icon error-icon">✗</div>
+            <p th:text="${message}">Đã có lỗi xảy ra trong quá trình thanh toán.</p>
+
+            <div th:if="${responseCode != null}" class="error-details">
+                <p><span class="label">Mã lỗi:</span> <span th:text="${responseCode}">24</span></p>
+                <p><span class="label">Chi tiết lỗi:</span> <span th:text="${responseMessage}">Giao dịch đã bị hủy bởi người dùng</span></p>
+            </div>
+
+            <p>Vui lòng thử lại hoặc chọn phương thức thanh toán khác.</p>
+
+            <div class="support-info">
+                <p>Nếu bạn cần hỗ trợ, vui lòng liên hệ:</p>
+                <p><strong>Hotline:</strong> <span th:text="${supportPhone ?: '1900 55 55 77'}">1900 55 55 77</span></p>
+                <p><strong>Email:</strong> hotro@smokingcessation.com</p>
+            </div>
+
+            <a href="/payment" class="button">Thử lại</a>
+            <a href="/dashboard" class="button" style="background-color: #666;">Quay về trang chủ</a>
+        </div>
+    </div>
+</body>
+</html>
+

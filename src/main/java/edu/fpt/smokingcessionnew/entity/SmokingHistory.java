@@ -1,8 +1,10 @@
 package edu.fpt.smokingcessionnew.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,11 +33,13 @@ public class SmokingHistory {
     @Column(name = "age_started_smoking")
     private Integer ageStartedSmoking;
 
+    @Size(max = 255)
+    @Nationalized
     @Column(name = "brand_preference")
     private String brandPreference;
 
-    @Lob
-    @Column(name = "triggers")
+    @Nationalized
+    @Column(name = "triggers", columnDefinition = "NVARCHAR(MAX)")
     private String triggers;
 
     @Column(name = "previous_quit_attempts")
@@ -47,8 +51,8 @@ public class SmokingHistory {
     @Column(name = "motivation_level")
     private Integer motivationLevel;
 
-    @Lob
-    @Column(name = "health_conditions_related")
+    @Nationalized
+    @Column(name = "health_conditions_related", columnDefinition = "NVARCHAR(MAX)")
     private String healthConditionsRelated;
 
     @Column(name = "recorded_date")

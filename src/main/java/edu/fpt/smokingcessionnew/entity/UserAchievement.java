@@ -25,8 +25,7 @@ public class UserAchievement {
     @Column(name = "earned_date")
     private LocalDate earnedDate;
 
-    @Lob
-    @Column(name = "progress_snapshot")
+    @Column(name = "progress_snapshot", columnDefinition = "TEXT")
     private String progressSnapshot;
 
 }

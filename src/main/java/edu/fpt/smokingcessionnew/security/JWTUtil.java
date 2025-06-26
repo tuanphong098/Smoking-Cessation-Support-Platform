@@ -26,6 +26,9 @@ public class JWTUtil {
     @Value("${jwt.expiration:86400000}") // 24 hours in milliseconds
     private long expiration;
 
+    @Value("${jwt.remember-me-expiration:2592000000}") // 30 days in milliseconds
+    private long rememberMeExpiration;
+
     private SecretKey signingKey;
 
     @Autowired
@@ -52,15 +55,21 @@ public class JWTUtil {
 
     // Tạo token từ thông tin user
     public String generateToken(String email, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
-        return createToken(claims, email);
+        return generateToken(email, role, false);
     }
 
-    // Tạo token với các claims
-    private String createToken(Map<String, Object> claims, String subject) {
+    // Tạo token với option remember me
+    public String generateToken(String email, String role, boolean rememberMe) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        long tokenExpiration = rememberMe ? rememberMeExpiration : expiration;
+        return createToken(claims, email, tokenExpiration);
+    }
+
+    // Tạo token với các claims và thời gian hết hạn
+    private String createToken(Map<String, Object> claims, String subject, long expirationTime) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+        Date expiryDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
                 .setClaims(claims)

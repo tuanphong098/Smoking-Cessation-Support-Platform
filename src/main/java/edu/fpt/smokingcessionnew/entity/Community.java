@@ -1,10 +1,12 @@
 package edu.fpt.smokingcessionnew.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -18,11 +20,13 @@ public class Community {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Size(max = 255)
+    @Nationalized
     @Column(name = "title")
     private String title;
 
-    @Lob
-    @Column(name = "content")
+    @Nationalized
+    @Column(name = "content", columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
     @Column(name = "post_type")
@@ -34,10 +38,9 @@ public class Community {
     @Column(name = "comments_count")
     private Integer commentsCount;
 
-    @Column(name = "created_date")
-    private Instant createdDate;
+    @Column(name = "created_date", columnDefinition = "datetime")
+    private LocalDateTime createdDate;
 
     @Column(name = "is_active")
     private Boolean isActive;
-
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +17,7 @@ public class Sysdiagram {
     @Column(name = "diagram_id", nullable = false)
     private Integer id;
 
+    @NotNull
     @Column(name = "principal_id", nullable = false)
     private Integer principalId;
 

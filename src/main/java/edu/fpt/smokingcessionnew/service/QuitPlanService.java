@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +52,7 @@ public class QuitPlanService {
 
         quitPlan.setUser(user);
         quitPlan.setSmokingHistory(smokingHistory);
-        quitPlan.setCreatedDate(Instant.now());
+        quitPlan.setCreatedDate(LocalDateTime.now()); // Changed from Instant.now() to LocalDateTime.now()
         quitPlan.setStatus(1); // 1 = Active
 
         QuitPlan savedPlan = quitPlanRepository.save(quitPlan);

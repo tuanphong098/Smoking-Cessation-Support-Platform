@@ -22,10 +22,14 @@ public class OpenApiConfig {
                                 .name(securitySchemeName)
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
-                                .bearerFormat("JWT")))
+                                .bearerFormat("JWT")
+                                .description("Nhập token JWT của bạn ở đây (không cần thêm prefix 'Bearer')")))
                 .info(new Info()
                         .title("Smoking Cessation API")
-                        .description("REST API cho ứng dụng cai thuốc lá")
+                        .description("REST API cho ứng dụng cai thuốc lá<br>" +
+                                     "<b>Lưu ý quan trọng:</b> Sau khi đăng nhập, sao chép token từ response và " +
+                                     "nhấp vào nút 'Authorize' ở đầu trang để nhập token. " +
+                                     "Điều này sẽ tự động gửi token với mỗi API request.")
                         .version("1.0")
                         .license(new License().name("Apache 2.0").url("http://springdoc.org")));
     }

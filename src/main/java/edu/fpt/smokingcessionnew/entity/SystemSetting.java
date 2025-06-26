@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Getter
@@ -35,7 +35,6 @@ public class SystemSetting {
     @Column(name = "sms_enabled")
     private Boolean smsEnabled;
 
-    @Column(name = "updated_date")
-    private Instant updatedDate;
-
+    @Column(name = "updated_date", columnDefinition = "datetime")
+    private LocalDateTime updatedDate;
 }

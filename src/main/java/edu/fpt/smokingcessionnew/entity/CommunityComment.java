@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -22,18 +22,16 @@ public class CommunityComment {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Lob
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
     private CommunityComment parentComment;
 
-    @Column(name = "created_date")
-    private Instant createdDate;
+    @Column(name = "created_date", columnDefinition = "datetime")
+    private LocalDateTime createdDate;
 
     @Column(name = "is_active")
     private Boolean isActive;
-
 }

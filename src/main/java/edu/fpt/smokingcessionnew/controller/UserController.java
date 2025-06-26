@@ -72,6 +72,17 @@ public class UserController {
         return userService.resetPassword(token, newPassword);
     }
 
+    /**
+     * API cho phép admin đặt lại mật khẩu cho người dùng và trả về mật khẩu tạm thời
+     * @param userId ID của người dùng cần đặt lại mật khẩu
+     * @return Thông tin kết quả và mật khẩu tạm thời
+     */
+    @PostMapping("/{userId}/admin-reset-password")
+    @PreAuthorize("hasRole('ROLE_1')") // Chỉ admin mới có quyền thực hiện chức năng này
+    public ResponseEntity<?> adminResetUserPassword(@PathVariable Integer userId) {
+        return userService.resetUserPassword(userId);
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<?> getCurrentUserProfile(@RequestParam String email) {
         // Thực tế thường lấy email từ token JWT thông qua Principal hoặc SecurityContext

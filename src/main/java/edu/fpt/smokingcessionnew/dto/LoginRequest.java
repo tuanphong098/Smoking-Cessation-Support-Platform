@@ -21,6 +21,9 @@ public class LoginRequest {
 
     @NotNull(message = "Vai trò không được để trống")
     @Schema(description = "Vai trò đăng nhập (2=Member, 3=Coach)", example = "2",
-            allowableValues = {"2", "3"})
-    private Integer role; // 2 = Member, 3 = Coach
+            allowableValues = {"1", "2", "3"})
+    private Integer role; // 1= admin 2 = Member, 3 = Coach
+
+    @Schema(description = "Lưu đăng nhập", example = "true", defaultValue = "false")
+    private Boolean rememberMe = false;
 }

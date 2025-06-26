@@ -11,7 +11,13 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,7 +29,24 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản mới", description = "Đăng ký tài khoản mới với email, mật khẩu và vai trò (Member hoặc Coach)")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request, BindingResult bindingResult) {
+        // Kiểm tra lỗi validation
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getAllErrors().forEach(error -> {
+                String fieldName = error instanceof FieldError ? ((FieldError) error).getField() : error.getObjectName();
+                String errorMessage = error.getDefaultMessage();
+                errors.put(fieldName, errorMessage);
+            });
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", "Dữ liệu không hợp lệ");
+            response.put("errors", errors);
+
+            return ResponseEntity.badRequest().body(response);
+        }
+
         // Kiểm tra password và confirmPassword
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             return ResponseEntity.badRequest().body("Mật khẩu và xác nhận mật khẩu không khớp");
@@ -35,7 +58,24 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập", description = "Đăng nhập với email, mật khẩu và vai trò")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, BindingResult bindingResult) {
+        // Kiểm tra lỗi validation
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getAllErrors().forEach(error -> {
+                String fieldName = error instanceof FieldError ? ((FieldError) error).getField() : error.getObjectName();
+                String errorMessage = error.getDefaultMessage();
+                errors.put(fieldName, errorMessage);
+            });
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", HttpStatus.BAD_REQUEST.value());
+            response.put("message", "Dữ liệu đăng nhập không hợp lệ");
+            response.put("errors", errors);
+
+            return ResponseEntity.badRequest().body(response);
+        }
+
         // Gọi AuthService để xử lý đăng nhập
         return authService.login(request);
     }
@@ -43,8 +83,9 @@ public class AuthController {
     @PostMapping("/logout")
     @Operation(summary = "Đăng xuất", description = "Đăng xuất khỏi hệ thống, vô hiệu hóa token JWT",
               security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        return authService.logout(request);
+    public ResponseEntity<?> logout(HttpServletRequest request, @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        // Trích xuất token từ Authorization header và truyền vào service
+        return authService.logout(request, authHeader, null);
     }
 
     @GetMapping("/verify-email")
@@ -57,5 +98,23 @@ public class AuthController {
     @Operation(summary = "Gửi lại email xác thực", description = "Gửi lại email xác thực cho tài khoản đã đăng ký")
     public ResponseEntity<?> resendVerificationEmail(@RequestParam("email") String email) {
         return authService.resendVerificationEmail(email);
+    }
+
+    // Xử lý ngoại lệ validation khi không sử dụng BindingResult
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = error instanceof FieldError ? ((FieldError) error).getField() : error.getObjectName();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("message", "Dữ liệu không hợp lệ");
+        response.put("errors", errors);
+
+        return ResponseEntity.badRequest().body(response);
     }
 }

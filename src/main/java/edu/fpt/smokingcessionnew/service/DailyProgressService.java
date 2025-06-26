@@ -12,10 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
 
 @Service
 public class DailyProgressService {
@@ -65,7 +66,7 @@ public class DailyProgressService {
         dailyProgress.setUser(user);
         dailyProgress.setPlan(plan);
         dailyProgress.setMoneySaved(moneySaved);
-        dailyProgress.setCreatedDate(Instant.now());
+        dailyProgress.setCreatedDate(LocalDateTime.now());
 
         // Tính toán health score dựa trên số điếu hút và mức độ thèm thuốc
         int healthScore = calculateHealthScore(cigarettesSmoked, cigarettesPerDay, dailyProgress.getCravingIntensity());

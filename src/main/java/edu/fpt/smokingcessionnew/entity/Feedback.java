@@ -3,8 +3,9 @@ package edu.fpt.smokingcessionnew.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -31,12 +32,12 @@ public class Feedback {
     @Column(name = "rating")
     private Integer rating;
 
-    @Lob
-    @Column(name = "comment")
+    @Nationalized
+    @Column(name = "comment", columnDefinition = "NVARCHAR(MAX)")
     private String comment;
 
-    @Column(name = "created_date")
-    private Instant createdDate;
+    @Column(name = "created_date", columnDefinition = "datetime")
+    private LocalDateTime createdDate;
 
     @Column(name = "is_reviewed")
     private Boolean isReviewed;

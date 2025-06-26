@@ -56,7 +56,7 @@ public class AuthService {
         user.setPhone(request.getPhone());
         user.setRole(request.getRole()); // Sử dụng vai trò từ request (2=Member hoặc 3=Coach)
         user.setStatus(0); // 0 = Inactive (chưa xác thực)
-        user.setCreatedDate(LocalDateTime.now());
+        user.setCreatedDate(LocalDateTime.now()); // Đã thay đổi từ Instant.now() sang LocalDateTime.now()
 
         // Bỏ qua các trường không tồn tại trong DB
         // user.setEmailVerified(false);
@@ -113,9 +113,10 @@ public class AuthService {
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
-        // Tạo và trả về JWT token
+        // Tạo và trả về JWT token với tùy chọn rememberMe
         String roleStr = user.getRole().toString();
-        String token = jwtUtil.generateToken(user.getEmail(), roleStr);
+        boolean rememberMe = request.getRememberMe() != null && request.getRememberMe();
+        String token = jwtUtil.generateToken(user.getEmail(), roleStr, rememberMe);
 
         return ResponseEntity.ok(new AuthResponse(
                 token,
@@ -166,7 +167,8 @@ public class AuthService {
         // Tạo token mới
         String verificationToken = UUID.randomUUID().toString();
         user.setVerificationToken(verificationToken);
-        user.setTokenExpiryDate(LocalDateTime.now().plusHours(24));
+        user.setTokenExpiryDate(LocalDateTime.now().plusHours(24)); // Đã thay đổi từ Instant.now().plusSeconds() sang LocalDateTime.now().plusHours()
+        // Lưu user với token mới
 
         userRepository.save(user);
 
@@ -182,19 +184,80 @@ public class AuthService {
     /**
      * Đăng xuất người dùng bằng cách vô hiệu hóa token JWT
      *
-     * @param request HttpServletRequest chứa token trong header Authorization
+     * @param request HttpServletRequest chứa thông tin request
+     * @param authHeader Header Authorization được truyền trực tiếp
+     * @param tokenParam Token được truyền trực tiếp qua parameter
      * @return ResponseEntity thông báo đăng xuất thành công
      */
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+    public ResponseEntity<?> logout(HttpServletRequest request, String authHeader, String tokenParam) {
+        boolean foundToken = false;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            // Vô hiệu hóa token bằng cách thêm vào danh sách đen
+        // Kiểm tra token được truyền trực tiếp qua parameter
+        if (tokenParam != null && !tokenParam.isEmpty()) {
+            jwtUtil.invalidateToken(tokenParam);
+            foundToken = true;
+        }
+        // Kiểm tra token được truyền qua header
+        else if (authHeader != null && !authHeader.isEmpty()) {
+            String token = authHeader;
+
+            // Xử lý nếu token bắt đầu với "Bearer "
+            if (authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+
             jwtUtil.invalidateToken(token);
-            return ResponseEntity.ok("Đăng xuất thành công");
+            foundToken = true;
+        }
+        // Kiểm tra token từ HttpServletRequest
+        else {
+            String requestTokenHeader = request.getHeader("Authorization");
+            if (requestTokenHeader != null && !requestTokenHeader.isEmpty()) {
+                String token = requestTokenHeader;
+
+                if (requestTokenHeader.startsWith("Bearer ")) {
+                    token = requestTokenHeader.substring(7);
+                }
+
+                jwtUtil.invalidateToken(token);
+                foundToken = true;
+            } else {
+                // Kiểm tra token từ parameter trong request
+                String requestTokenParam = request.getParameter("token");
+                if (requestTokenParam != null && !requestTokenParam.isEmpty()) {
+                    jwtUtil.invalidateToken(requestTokenParam);
+                    foundToken = true;
+                }
+            }
         }
 
-        return ResponseEntity.badRequest().body("Không tìm thấy token xác thực");
+        // Kể cả khi không tìm thấy token, vẫn cho phép đăng xuất thành công
+        // Điều này giúp người dùng vẫn có thể đăng xuất ngay cả khi token không tồn tại hoặc hết hạn
+        if (!foundToken) {
+            return ResponseEntity.ok("Đăng xuất thành công , không tìm thấy token");
+        }
+
+        return ResponseEntity.ok("Đăng xuất thành công");
+    }
+
+    /**
+     * Phương thức đăng xuất cũ để duy trì khả năng tương thích
+     *
+     * @param request HttpServletRequest
+     * @return ResponseEntity
+     */
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        return logout(request, null, null);
+    }
+
+    /**
+     * Phương thức đăng xuất để duy trì khả năng tương thích
+     *
+     * @param request HttpServletRequest
+     * @param authHeader Header Authorization
+     * @return ResponseEntity
+     */
+    public ResponseEntity<?> logout(HttpServletRequest request, String authHeader) {
+        return logout(request, authHeader, null);
     }
 }

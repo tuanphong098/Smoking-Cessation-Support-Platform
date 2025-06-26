@@ -3,8 +3,9 @@ package edu.fpt.smokingcessionnew.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -26,7 +27,7 @@ public class CoachingSession {
     private Integer sessionType;
 
     @Column(name = "scheduled_time")
-    private Instant scheduledTime;
+    private LocalDateTime scheduledTime;
 
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
@@ -34,11 +35,10 @@ public class CoachingSession {
     @Column(name = "status")
     private Integer status;
 
-    @Lob
-    @Column(name = "notes")
+    @Nationalized
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
     @Column(name = "created_date")
-    private Instant createdDate;
-
+    private LocalDateTime createdDate;
 }

@@ -1,10 +1,11 @@
 package edu.fpt.smokingcessionnew.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -18,11 +19,11 @@ public class SystemNotification {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Size(max = 255)
     @Column(name = "title")
     private String title;
 
-    @Lob
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "notification_type")
@@ -31,13 +32,12 @@ public class SystemNotification {
     @Column(name = "is_read")
     private Boolean isRead;
 
-    @Column(name = "scheduled_time")
-    private Instant scheduledTime;
+    @Column(name = "scheduled_time", columnDefinition = "datetime")
+    private LocalDateTime scheduledTime;
 
-    @Column(name = "sent_time")
-    private Instant sentTime;
+    @Column(name = "sent_time", columnDefinition = "datetime")
+    private LocalDateTime sentTime;
 
-    @Column(name = "created_date")
-    private Instant createdDate;
-
+    @Column(name = "created_date", columnDefinition = "datetime")
+    private LocalDateTime createdDate;
 }

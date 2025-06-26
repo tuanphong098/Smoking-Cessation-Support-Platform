@@ -3,10 +3,11 @@ package edu.fpt.smokingcessionnew.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -42,11 +43,10 @@ public class DailyProgress {
     @Column(name = "craving_intensity")
     private Integer cravingIntensity;
 
-    @Lob
-    @Column(name = "notes")
+    @Nationalized
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
-    @Column(name = "created_date")
-    private Instant createdDate;
-
+    @Column(name = "created_date", columnDefinition = "datetime")
+    private LocalDateTime createdDate;
 }

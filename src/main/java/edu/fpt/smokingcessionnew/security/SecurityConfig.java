@@ -38,10 +38,14 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Cấu hình quyền truy cập cho mọi yêu cầu
             .authorizeHttpRequests(authz -> authz
-                // CHO PHÉP TẤT CẢ CÁC REQUEST - chỉ sử dụng trong môi trường phát triển
-                .anyRequest().permitAll()
+                // Cho phép truy cập không cần xác thực cho các API công khai
+                .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify-email",
+                               "/api/auth/resend-verification-email", "/swagger-ui/**",
+                               "/swagger-ui.html", "/api-docs/**", "/api/test/token-info").permitAll()
+                // Bắt buộc xác thực cho tất cả các request khác
+                .anyRequest().authenticated()
             )
-            // Vẫn giữ filter JWT để có thể test các tính năng yêu cầu xác thực
+            // Áp dụng filter JWT trước UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
