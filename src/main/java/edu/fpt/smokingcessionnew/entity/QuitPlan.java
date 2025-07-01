@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 public class QuitPlan {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "plan_id", nullable = false)
     private Integer id;
 
@@ -24,6 +25,10 @@ public class QuitPlan {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "smoking_history_id")
     private SmokingHistory smokingHistory;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coach_id")
+    private User coach;
 
     @Column(name = "target_quit_date")
     private LocalDate targetQuitDate;

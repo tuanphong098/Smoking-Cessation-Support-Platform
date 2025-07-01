@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test VNPay - Localhost</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .test-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .test-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .test-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .card strong {
+            color: #495057;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Test VNPay Payment - Localhost</h1>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="userId">User ID:</label>
+                <input type="number" id="userId" name="userId" value="1" required>
+                <small>ID của người dùng trong database</small>
+            </div>
+
+            <div class="form-group">
+                <label for="packageId">Package ID:</label>
+                <input type="number" id="packageId" name="packageId" value="1" required>
+                <small>ID của gói thành viên trong database</small>
+            </div>
+
+            <div class="form-group">
+                <label for="bankCode">Ngân hàng:</label>
+                <select id="bankCode" name="bankCode">
+                    <option value="">Cổng thanh toán VNPay</option>
+                    <option value="NCB">NCB - Ngân hàng NCB</option>
+                    <option value="AGRIBANK">AGRIBANK - Agribank</option>
+                    <option value="SCB">SCB - Sacombank</option>
+                    <option value="SAIGONBANK">SAIGONBANK - Ngân hàng Sài Gòn</option>
+                    <option value="ACB">ACB - Ngân hàng ACB</option>
+                    <option value="TCB">TCB - Techcombank</option>
+                    <option value="BIDV">BIDV - Ngân hàng BIDV</option>
+                    <option value="VIETINBANK">VIETINBANK - Vietinbank</option>
+                    <option value="VPB">VPB - VP Bank</option>
+                    <option value="VIETCOMBANK">VIETCOMBANK - Vietcombank</option>
+                </select>
+            </div>
+
+            <button type="button" class="btn" onclick="createPayment()">Tạo thanh toán VNPay</button>
+        </form>
+
+        <div id="status" class="status"></div>
+
+        <div class="test-info">
+            <h3>📝 Thông tin test VNPay Sandbox</h3>
+            <p><strong>Lưu ý:</strong> Đây là môi trường test, sử dụng thông tin thẻ test sau:</p>
+
+            <div class="test-cards">
+                <div class="card">
+                    <strong>Thẻ nội địa:</strong><br>
+                    Số thẻ: 9704198526191432198<br>
+                    Họ tên: NGUYEN VAN A<br>
+                    Ngày hết hạn: 07/15<br>
+                    Mã OTP: 123456
+                </div>
+                <div class="card">
+                    <strong>Thẻ quốc tế:</strong><br>
+                    Số thẻ: 5123450000000008<br>
+                    Họ tên: NGUYEN VAN A<br>
+                    Ngày hết hạn: 07/15<br>
+                    CVV: 100
+                </div>
+            </div>
+
+            <p><strong>Hướng dẫn test:</strong></p>
+            <ol>
+                <li>Nhấn "Tạo thanh toán VNPay" để tạo URL thanh toán</li>
+                <li>Sử dụng thông tin thẻ test ở trên</li>
+                <li>Kết quả sẽ được trả về tại: <code>http://localhost:8080/api/payment/vnpay-return</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function createPayment() {
+            const userId = document.getElementById('userId').value;
+            const packageId = document.getElementById('packageId').value;
+            const bankCode = document.getElementById('bankCode').value;
+
+            if (!userId || !packageId) {
+                showStatus('Vui lòng nhập đầy đủ User ID và Package ID', 'error');
+                return;
+            }
+
+            showStatus('Đang tạo thanh toán...', 'success');
+
+            // Gọi API để tạo thanh toán
+            const url = `/api/payment-debug/test-payment-url?packageId=${packageId}&userId=${userId}&bankCode=${bankCode}`;
+
+            // Mở trang test payment trong tab mới
+            window.open(url, '_blank');
+
+            showStatus('URL thanh toán đã được tạo và mở trong tab mới', 'success');
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test VNPay - Smoking Cessation App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: #4a90e2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: #4a90e2;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #357abd;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .vnpay-info {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .test-data {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .package-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .package-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+            transition: transform 0.2s;
+        }
+        .package-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .package-name {
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 5px;
+        }
+        .package-price {
+            font-size: 18px;
+            color: #28a745;
+            font-weight: bold;
+        }
+        .url-result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚭 Test Thanh Toán VNPay</h1>
+            <p>Ứng dụng Cai Thuốc Lá - Testing Environment</p>
+        </div>
+
+        <div class="content">
+            <!-- VNPay Info -->
+            <div class="vnpay-info">
+                <h3>📋 Thông tin VNPay Sandbox</h3>
+                <p><strong>Môi trường:</strong> Test/Sandbox</p>
+                <p><strong>TMN Code:</strong> 2QXUI4LC</p>
+                <p><strong>Cách thức hoạt động:</strong> Tạo URL → Chuyển hướng → Chọn phương thức thanh toán → Xác nhận</p>
+            </div>
+
+            <!-- Load Packages -->
+            <div class="test-section">
+                <h3>📦 Danh sách gói thành viên</h3>
+                <button class="btn" onclick="loadPackages()">Tải danh sách gói</button>
+                <div id="packagesList" class="package-list"></div>
+            </div>
+
+            <!-- Test Payment -->
+            <div class="test-section">
+                <h3>💳 Test thanh toán VNPay</h3>
+                <div class="form-group">
+                    <label for="packageId">Package ID:</label>
+                    <input type="number" id="packageId" value="1" placeholder="Nhập ID gói thành viên">
+                </div>
+                <div class="form-group">
+                    <label for="userId">User ID:</label>
+                    <input type="number" id="userId" value="1" placeholder="Nhập ID người dùng">
+                </div>
+                <div class="form-group">
+                    <label for="bankCode">Ngân hàng (tùy chọn):</label>
+                    <select id="bankCode">
+                        <option value="NCB">NCB - Ngân hàng Quốc dân</option>
+                        <option value="BIDV">BIDV - Ngân hàng BIDV</option>
+                        <option value="VCB">VCB - Vietcombank</option>
+                        <option value="VTB">VTB - VietinBank</option>
+                        <option value="ACB">ACB - Á Châu Bank</option>
+                        <option value="">Không chọn (để VNPay tự chọn)</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="testPayment()">Tạo URL thanh toán VNPay</button>
+
+                <div id="paymentResult" class="result"></div>
+                <div id="urlResult" class="url-result" style="display: none;"></div>
+            </div>
+
+            <!-- Test Data -->
+            <div class="test-data">
+                <h4>🔧 Thông tin test VNPay Sandbox:</h4>
+                <ul>
+                    <li><strong>Số thẻ ATM test:</strong> 9704198526191432198</li>
+                    <li><strong>Tên chủ thẻ:</strong> NGUYEN VAN A</li>
+                    <li><strong>Ngày hết hạn:</strong> 07/15</li>
+                    <li><strong>Mã OTP:</strong> 123456</li>
+                    <li><strong>Mật khẩu Internet Banking:</strong> 123456</li>
+                </ul>
+                <p><strong>Lưu ý:</strong> Đây là dữ liệu test của VNPay, chỉ hoạt động trong môi trường sandbox.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        async function loadPackages() {
+            try {
+                const response = await fetch(`${API_BASE}/payment/packages`);
+                const packages = await response.json();
+
+                const packagesList = document.getElementById('packagesList');
+                packagesList.innerHTML = '';
+
+                packages.forEach(pkg => {
+                    const packageDiv = document.createElement('div');
+                    packageDiv.className = 'package-item';
+                    packageDiv.innerHTML = `
+                        <div class="package-name">${pkg.packageName}</div>
+                        <div class="package-price">${new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(pkg.price)}</div>
+                        <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                            ID: ${pkg.id} | Thời hạn: ${pkg.durationDays} ngày
+                        </div>
+                        <button class="btn" style="margin-top: 10px; padding: 8px 15px; font-size: 14px;"
+                                onclick="selectPackage(${pkg.id})">Chọn gói này</button>
+                    `;
+                    packagesList.appendChild(packageDiv);
+                });
+
+                showResult('success', `Đã tải ${packages.length} gói thành viên`);
+            } catch (error) {
+                showResult('error', 'Không thể tải danh sách gói: ' + error.message);
+            }
+        }
+
+        function selectPackage(packageId) {
+            document.getElementById('packageId').value = packageId;
+            showResult('success', `Đã chọn gói ID: ${packageId}`);
+        }
+
+        async function testPayment() {
+            const packageId = document.getElementById('packageId').value;
+            const userId = document.getElementById('userId').value;
+            const bankCode = document.getElementById('bankCode').value;
+
+            if (!packageId || !userId) {
+                showResult('error', 'Vui lòng nhập Package ID và User ID');
+                return;
+            }
+
+            try {
+                // Tạo URL thanh toán
+                let url = `${API_BASE}/payment-debug/test-payment-url?packageId=${packageId}&userId=${userId}`;
+                if (bankCode) {
+                    url += `&bankCode=${bankCode}`;
+                }
+
+                const response = await fetch(url);
+
+                if (response.ok) {
+                    const html = await response.text();
+
+                    // Extract payment URL from HTML response
+                    const urlMatch = html.match(/href='([^']+)'/);
+                    if (urlMatch) {
+                        const paymentUrl = urlMatch[1];
+
+                        showResult('success', 'Đã tạo URL thanh toán thành công!');
+
+                        const urlResult = document.getElementById('urlResult');
+                        urlResult.style.display = 'block';
+                        urlResult.innerHTML = `
+                            <h4>🔗 URL Thanh toán VNPay:</h4>
+                            <p style="margin-bottom: 15px;">${paymentUrl}</p>
+                            <button class="btn btn-success" onclick="window.open('${paymentUrl}', '_blank')">
+                                🚀 Mở trang thanh toán VNPay
+                            </button>
+                            <button class="btn" onclick="copyToClipboard('${paymentUrl}')" style="margin-left: 10px;">
+                                📋 Copy URL
+                            </button>
+                        `;
+                    } else {
+                        document.getElementById('urlResult').innerHTML = html;
+                        document.getElementById('urlResult').style.display = 'block';
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('error', 'Lỗi tạo thanh toán: ' + errorText);
+                }
+            } catch (error) {
+                showResult('error', 'Lỗi kết nối: ' + error.message);
+            }
+        }
+
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('paymentResult');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+            resultDiv.style.display = 'block';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showResult('success', 'Đã copy URL vào clipboard!');
+            }).catch(() => {
+                showResult('error', 'Không thể copy URL');
+            });
+        }
+
+        // Auto load packages on page load
+        window.onload = function() {
+            setTimeout(loadPackages, 1000);
+        };
+    </script>
+</body>
+</html>

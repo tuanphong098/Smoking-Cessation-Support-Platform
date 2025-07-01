@@ -10,7 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface MemberSubscriptionRepository extends JpaRepository<MemberSubscription, Integer> {
+    List<MemberSubscription> findByUser(User user);
     List<MemberSubscription> findByUserAndStatus(User user, Integer status);
     Optional<MemberSubscription> findByTransactionId(String transactionId);
-    Optional<MemberSubscription> findTopByUserOrderByEndDateDesc(User user);
+    List<MemberSubscription> findByPaymentStatus(Integer paymentStatus);
 }

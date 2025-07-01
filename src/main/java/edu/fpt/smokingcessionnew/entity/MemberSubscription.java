@@ -18,11 +18,11 @@ public class MemberSubscription {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "package_id")
+    @JoinColumn(name = "package_id", nullable = false)
     private MembershipPackage membershipPackage;
 
     @Column(name = "start_date")
@@ -34,24 +34,34 @@ public class MemberSubscription {
     @Column(name = "amount_paid", precision = 18, scale = 2)
     private BigDecimal amountPaid;
 
-    @Column(name = "payment_date")
-    private LocalDate paymentDate;
-
     @Column(name = "payment_method")
     private String paymentMethod;
+
+    @Column(name = "payment_date")
+    private LocalDate paymentDate;
 
     @Column(name = "transaction_id")
     private String transactionId;
 
-    @Column(name = "payment_status")
-    private Integer paymentStatus; // 0: Pending, 1: Completed, 2: Failed
-
     @Column(name = "status")
-    private Integer status; // 0: Inactive, 1: Active, 2: Expired, 3: Cancelled
+    private Integer status; // 0=Pending, 1=Active, 2=Expired, 3=Cancelled
 
-    @Column(name = "created_date", columnDefinition = "datetime")
+    @Column(name = "payment_status")
+    private Integer paymentStatus; // 0=Pending, 1=Completed, 2=Failed
+
+    @Column(name = "created_date")
     private LocalDateTime createdDate;
 
-    @Column(name = "updated_date", columnDefinition = "datetime")
+    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdDate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedDate = LocalDateTime.now();
+    }
 }

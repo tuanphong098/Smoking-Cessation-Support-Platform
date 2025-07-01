@@ -1,34 +1,251 @@
 package edu.fpt.smokingcessionnew.util;
 
 import jakarta.servlet.http.HttpServletRequest;
-
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * Lớp tiện ích cho VNPay, chứa các phương thức xử lý thanh toán
- * Dựa trên code mẫu do VNPay cung cấp
+ * VNPay Utility Class theo chuẩn từ VNPay documentation
+ * Đã sửa lỗi signature và URL encoding theo khuyến nghị
  */
 public class VNPayUtil {
 
     /**
-     * Tạo chuỗi hash dữ liệu SHA256 theo đúng yêu cầu của VNPay
+     * Tạo mã giao dịch ngẫu nhiên
      */
-    public static String hashAllFields(Map<String, String> fields, String secretKey) {
-        // Sắp xếp theo thứ tự từ điển
-        List<String> fieldNames = new ArrayList<>(fields.keySet());
+    public static String getRandomNumber(int len) {
+        Random rnd = new Random();
+        String chars = "0123456789";
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Sắp xếp và encode parameters theo chuẩn VNPay
+     * Đây là hàm quan trọng để tạo signature đúng
+     */
+    public static Map<String, String> sortObject(Map<String, String> params) {
+        Map<String, String> sorted = new TreeMap<>();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (value != null && !value.isEmpty()) {
+                try {
+                    // Encode theo chuẩn VNPay: thay %20 thành +
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString())
+                        .replace("%20", "+");
+                    sorted.put(key, encodedValue);
+                } catch (UnsupportedEncodingException e) {
+                    sorted.put(key, value);
+                }
+            }
+        }
+        return sorted;
+    }
+
+    /**
+     * Tạo URL thanh toán VNPay với signature đúng
+     */
+    public static String createPaymentUrl(Map<String, String> vnpParams, String secretKey) {
+        // Loại bỏ các tham số không cần thiết cho việc tạo signature
+        Map<String, String> paramsForSign = new HashMap<>(vnpParams);
+        paramsForSign.remove("vnp_SecureHashType");
+        paramsForSign.remove("vnp_SecureHash");
+
+        // Sắp xếp parameters theo thứ tự alphabet
+        List<String> fieldNames = new ArrayList<>(paramsForSign.keySet());
         Collections.sort(fieldNames);
 
-        // Tạo chuỗi hash
-        StringBuilder sb = new StringBuilder();
+        // Tạo hash data cho signature
+        StringBuilder hashData = new StringBuilder();
+        // Tạo query string cho URL
+        StringBuilder query = new StringBuilder();
+
         Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {
             String fieldName = itr.next();
+            String fieldValue = paramsForSign.get(fieldName);
+
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                // Build hash data (không encode cho hash)
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(fieldValue);
+
+                // Build query (encode cho URL)
+                try {
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8.toString()));
+                    query.append('=');
+                    query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
+                } catch (UnsupportedEncodingException e) {
+                    query.append(fieldName);
+                    query.append('=');
+                    query.append(fieldValue);
+                }
+
+                if (itr.hasNext()) {
+                    query.append('&');
+                    hashData.append('&');
+                }
+            }
+        }
+
+        // Tạo secure hash
+        String vnpSecureHash = hmacSHA512(secretKey, hashData.toString());
+
+        // Thêm secure hash vào query
+        query.append("&vnp_SecureHash=").append(vnpSecureHash);
+
+        return query.toString();
+    }
+
+    /**
+     * Tạo HMAC SHA512 signature
+     */
+    public static String hmacSHA512(String key, String data) {
+        try {
+            if (key == null || data == null) {
+                throw new NullPointerException("Key hoặc data không được null");
+            }
+
+            Mac hmac512 = Mac.getInstance("HmacSHA512");
+            byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
+            hmac512.init(secretKeySpec);
+
+            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
+            byte[] result = hmac512.doFinal(dataBytes);
+
+            StringBuilder sb = new StringBuilder(2 * result.length);
+            for (byte b : result) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException | InvalidKeyException ex) {
+            throw new RuntimeException("Lỗi tạo HMAC SHA512: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Lấy IP Address của client (chuyển về IPv4)
+     */
+    public static String getIpAddress(HttpServletRequest request) {
+        String ipAddress = null;
+
+        try {
+            // Kiểm tra các header proxy phổ biến
+            ipAddress = request.getHeader("X-Forwarded-For");
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getHeader("Proxy-Client-IP");
+            }
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getHeader("WL-Proxy-Client-IP");
+            }
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getHeader("HTTP_CLIENT_IP");
+            }
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getHeader("HTTP_X_FORWARDED_FOR");
+            }
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getRemoteAddr();
+            }
+
+            // Xử lý trường hợp có nhiều IP (lấy IP đầu tiên)
+            if (ipAddress != null && ipAddress.contains(",")) {
+                ipAddress = ipAddress.split(",")[0].trim();
+            }
+
+            // Chuyển IPv6 localhost thành IPv4
+            if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "::1".equals(ipAddress)) {
+                ipAddress = "127.0.0.1";
+            }
+
+            // Validate IPv4 format
+            if (ipAddress != null && !isValidIPv4(ipAddress)) {
+                ipAddress = "127.0.0.1";
+            }
+
+        } catch (Exception ex) {
+            ipAddress = "127.0.0.1";
+        }
+
+        return ipAddress != null ? ipAddress : "127.0.0.1";
+    }
+
+    /**
+     * Kiểm tra định dạng IPv4 hợp lệ
+     */
+    private static boolean isValidIPv4(String ip) {
+        if (ip == null || ip.isEmpty()) {
+            return false;
+        }
+
+        String[] parts = ip.split("\\.");
+        if (parts.length != 4) {
+            return false;
+        }
+
+        try {
+            for (String part : parts) {
+                int num = Integer.parseInt(part);
+                if (num < 0 || num > 255) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Validate signature từ VNPay response
+     */
+    public static boolean validateSignature(Map<String, String> fields, String secretKey) {
+        String vnpSecureHash = fields.get("vnp_SecureHash");
+        if (vnpSecureHash == null || vnpSecureHash.isEmpty()) {
+            return false;
+        }
+
+        // Tạo bản sao để không ảnh hưởng đến map gốc
+        Map<String, String> fieldsToValidate = new HashMap<>(fields);
+        fieldsToValidate.remove("vnp_SecureHashType");
+        fieldsToValidate.remove("vnp_SecureHash");
+
+        String signValue = hashAllFields(fieldsToValidate, secretKey);
+        return signValue.equalsIgnoreCase(vnpSecureHash);
+    }
+
+    /**
+     * Hash tất cả các fields để tạo signature
+     */
+    public static String hashAllFields(Map<String, String> fields, String secretKey) {
+        // Sắp xếp theo alphabet
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder sb = new StringBuilder();
+        Iterator<String> itr = fieldNames.iterator();
+
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                sb.append(fieldName).append("=").append(fieldValue);
+
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                sb.append(fieldName);
+                sb.append("=");
+                sb.append(fieldValue);
                 if (itr.hasNext()) {
                     sb.append("&");
                 }
@@ -39,166 +256,64 @@ public class VNPayUtil {
     }
 
     /**
-     * Tạo chuỗi HMAC_SHA512 theo đúng tiêu chuẩn VNPay
+     * Tạo thời gian theo format VNPay (yyyyMMddHHmmss)
      */
-    public static String hmacSHA512(String key, String data) {
-        try {
-            if (key == null || data == null) {
-                throw new NullPointerException();
-            }
-            final javax.crypto.Mac hmac = javax.crypto.Mac.getInstance("HmacSHA512");
-            final javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(key.getBytes(), "HmacSHA512");
-            hmac.init(secretKey);
-            final byte[] hmacData = hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hmacData);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return "";
+    public static String getCurrentTimeString() {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        return formatter.format(calendar.getTime());
     }
 
     /**
-     * Chuyển byte array sang chuỗi hex
+     * Tạo expire time (15 phút sau thời điểm hiện tại)
      */
-    public static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
+    public static String getExpireTimeString() {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        calendar.add(Calendar.MINUTE, 15);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        return formatter.format(calendar.getTime());
     }
 
     /**
-     * Lấy IP của người dùng từ request
+     * Tạo query string từ Map parameters với encode đúng chuẩn
      */
-    public static String getIpAddress(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-FORWARDED-FOR");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
-        }
-        if (ipAddress.equals("0:0:0:0:0:0:0:1")) {
-            ipAddress = "127.0.0.1";
-        }
-        return ipAddress;
-    }
-
-    /**
-     * Tạo mã giao dịch duy nhất
-     */
-    public static String getTransactionRef() {
-        return String.valueOf(System.currentTimeMillis()) + getRandomNumber(8);
-    }
-
-    /**
-     * Tạo chuỗi số ngẫu nhiên với độ dài cho trước
-     */
-    public static String getRandomNumber(int length) {
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < length; i++) {
-            sb.append(random.nextInt(10));
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Tạo URL thanh toán từ các tham số
-     */
-    public static String createPaymentUrl(
-            String vnpPayUrl, String vnpVersion, String vnpCommand,
-            String vnpTmnCode, String vnpAmount, String vnpBankCode,
-            String vnpOrderInfo, String vnpTxnRef, String vnpIpAddr,
-            String vnpCurrCode, String vnpLocale, String vnpReturnUrl,
-            String vnpHashSecret) {
-        try {
-            Map<String, String> vnpParams = new HashMap<>();
-            vnpParams.put("vnp_Version", vnpVersion);
-            vnpParams.put("vnp_Command", vnpCommand);
-            vnpParams.put("vnp_TmnCode", vnpTmnCode);
-            vnpParams.put("vnp_Amount", vnpAmount);
-            vnpParams.put("vnp_CurrCode", vnpCurrCode);
-
-            // Thêm bankCode nếu có
-            if (vnpBankCode != null && !vnpBankCode.isEmpty()) {
-                vnpParams.put("vnp_BankCode", vnpBankCode);
-            }
-
-            vnpParams.put("vnp_TxnRef", vnpTxnRef);
-            vnpParams.put("vnp_OrderInfo", vnpOrderInfo);
-            vnpParams.put("vnp_OrderType", "190000"); // Mã danh mục hàng hóa
-            vnpParams.put("vnp_Locale", vnpLocale);
-            vnpParams.put("vnp_ReturnUrl", vnpReturnUrl);
-            vnpParams.put("vnp_IpAddr", vnpIpAddr);
-
-            // Tạo thời gian thanh toán
-            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            String vnpCreateDate = formatter.format(cld.getTime());
-            vnpParams.put("vnp_CreateDate", vnpCreateDate);
-
-            // Tạo thời gian hết hạn
-            cld.add(Calendar.MINUTE, 15);
-            String vnpExpireDate = formatter.format(cld.getTime());
-            vnpParams.put("vnp_ExpireDate", vnpExpireDate);
-
-            // Tạo chuỗi hash và query
-            List<String> fieldNames = new ArrayList<>(vnpParams.keySet());
-            Collections.sort(fieldNames);
-
-            StringBuilder hashData = new StringBuilder();
-            StringBuilder query = new StringBuilder();
-
-            Iterator<String> itr = fieldNames.iterator();
-            while (itr.hasNext()) {
-                String fieldName = itr.next();
-                String fieldValue = vnpParams.get(fieldName);
-                if ((fieldValue != null) && (!fieldValue.isEmpty())) {
-                    // Build hash data (không URL encode)
-                    hashData.append(fieldName).append("=").append(fieldValue);
-
-                    // Build query (URL encode)
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8))
-                            .append("=")
-                            .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
-
-                    if (itr.hasNext()) {
-                        hashData.append("&");
-                        query.append("&");
-                    }
-                }
-            }
-
-            // Tạo signature
-            String vnpSecureHash = hmacSHA512(vnpHashSecret, hashData.toString());
-            query.append("&vnp_SecureHash=").append(vnpSecureHash);
-
-            return vnpPayUrl + "?" + query;
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    public static String buildQueryString(Map<String, String> params, boolean encode) {
+        if (params == null || params.isEmpty()) {
             return "";
         }
-    }
 
-    /**
-     * Kiểm tra chữ ký trong kết quả trả về từ VNPay
-     */
-    public static boolean verifyPaymentReturn(Map<String, String> vnpParams, String secretKey) {
-        String vnpSecureHash = vnpParams.get("vnp_SecureHash");
-        if (vnpSecureHash == null) {
-            return false;
-        }
+        StringBuilder query = new StringBuilder();
+        boolean first = true;
 
-        // Xóa các tham số không cần thiết
-        Map<String, String> validParams = new HashMap<>();
-        for (Map.Entry<String, String> entry : vnpParams.entrySet()) {
-            if (!entry.getKey().equals("vnp_SecureHash") && !entry.getKey().equals("vnp_SecureHashType")) {
-                validParams.put(entry.getKey(), entry.getValue());
+        // Sắp xếp theo alphabet
+        Map<String, String> sortedParams = new TreeMap<>(params);
+
+        for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (value != null && !value.isEmpty()) {
+                if (!first) {
+                    query.append("&");
+                }
+
+                if (encode) {
+                    try {
+                        query.append(URLEncoder.encode(key, StandardCharsets.UTF_8.toString()));
+                        query.append("=");
+                        query.append(URLEncoder.encode(value, StandardCharsets.UTF_8.toString()));
+                    } catch (UnsupportedEncodingException e) {
+                        query.append(key).append("=").append(value);
+                    }
+                } else {
+                    query.append(key).append("=").append(value);
+                }
+                first = false;
             }
         }
 
-        // Tạo chữ ký và so sánh
-        String checkHash = hashAllFields(validParams, secretKey);
-        return checkHash.equals(vnpSecureHash);
+        return query.toString();
     }
 }

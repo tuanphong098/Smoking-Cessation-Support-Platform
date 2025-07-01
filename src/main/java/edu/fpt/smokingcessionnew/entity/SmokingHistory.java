@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @Entity
 public class SmokingHistory {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "smoking_history_id", nullable = false)
     private Integer id;
 

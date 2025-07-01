@@ -7,6 +7,7 @@ import edu.fpt.smokingcessionnew.entity.User;
 import edu.fpt.smokingcessionnew.repository.MembershipPackageRepository;
 import edu.fpt.smokingcessionnew.repository.UserRepository;
 import edu.fpt.smokingcessionnew.service.PaymentService;
+import edu.fpt.smokingcessionnew.util.VNPayUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
@@ -94,7 +95,13 @@ public class PaymentController {
         paymentRequest.setPackageId(packageId);
         paymentRequest.setBankCode(bankCode);
         paymentRequest.setLanguage("vn"); // Mặc định tiếng Việt
-        paymentRequest.setIpAddress(request.getRemoteAddr());
+
+        // Sử dụng VNPayUtil để lấy IP address đúng cách
+        String ipAddress = VNPayUtil.getIpAddress(request);
+        paymentRequest.setIpAddress(ipAddress);
+
+        // Log IP address để debug
+        logger.info("Client IP Address: {}", ipAddress);
 
         // Gọi service để tạo URL thanh toán
         ResponseEntity<?> response = paymentService.createPaymentUrl(paymentRequest);
@@ -124,16 +131,19 @@ public class PaymentController {
     @ResponseBody
     @Operation(
         summary = "Tạo giao dịch thanh toán (đầy đủ tham số)",
-        description = "Tạo URL thanh toán VNPay cho gói thành viên ��ã chọn",
+        description = "Tạo URL thanh toán VNPay cho gói thành viên đã chọn",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<?> createPayment(
             @RequestBody PaymentRequest paymentRequest,
             HttpServletRequest request) {
 
-        // Set IP address cho yêu cầu thanh toán
-        String ipAddress = request.getRemoteAddr();
+        // Set IP address cho yêu cầu thanh toán sử dụng VNPayUtil
+        String ipAddress = VNPayUtil.getIpAddress(request);
         paymentRequest.setIpAddress(ipAddress);
+
+        // Log IP address để debug
+        logger.info("Client IP Address from VNPayUtil: {}", ipAddress);
 
         return paymentService.createPaymentUrl(paymentRequest);
     }

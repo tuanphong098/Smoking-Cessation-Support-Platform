@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface MembershipPackageRepository extends JpaRepository<MembershipPackage, Integer> {
     List<MembershipPackage> findByIsActiveTrue();
+    List<MembershipPackage> findByIsActiveTrueOrderByPriceAsc();
 }

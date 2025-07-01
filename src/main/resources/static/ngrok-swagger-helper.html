@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngrok Swagger Test Helper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .ngrok-info {
+            background: #e8f4f8;
+            border-left: 5px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: transform 0.2s;
+        }
+
+        .step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .step h3 {
+            color: #495057;
+            margin-top: 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+
+        .url-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            margin: 15px 0;
+            border: 2px solid #e9ecef;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        .solution-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Ngrok Swagger Test Helper</h1>
+
+        <div class="ngrok-info">
+            <h3>📡 Ngrok URLs hiện tại</h3>
+            <div class="url-display" id="ngrokUrl">https://c86f-171-243-49-222.ngrok-free.app</div>
+            <small>Cập nhật URL ngrok mới nếu khác với URL trên</small>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Vấn đề thường gặp với Ngrok + Swagger</h3>
+            <ul>
+                <li><strong>Browser Warning:</strong> Ngrok hiển thị cảnh báo bảo mật</li>
+                <li><strong>CORS Error:</strong> Swagger UI không thể gửi request</li>
+                <li><strong>Base URL:</strong> Swagger không biết sử dụng ngrok URL</li>
+                <li><strong>Authentication:</strong> JWT token không được gửi đúng</li>
+            </ul>
+        </div>
+
+        <div class="solution-box">
+            <h3>✅ Giải pháp từng bước</h3>
+
+            <div class="step">
+                <h3>Bước 1: Bypass Ngrok Warning</h3>
+                <p>Trước tiên phải vào ngrok URL để bypass cảnh báo:</p>
+                <a href="#" onclick="openNgrokHome()" class="btn">🏠 Mở trang chủ ngrok</a>
+                <p><small>Nhấn "Visit Site" để bypass warning</small></p>
+            </div>
+
+            <div class="step">
+                <h3>Bước 2: Test CORS Connection</h3>
+                <p>Kiểm tra kết nối CORS với ngrok:</p>
+                <button onclick="testNgrokCors()" class="btn btn-success">🔗 Test CORS</button>
+                <div id="corsResult" class="status"></div>
+            </div>
+
+            <div class="step">
+                <h3>Bước 3: Mở Swagger với Ngrok</h3>
+                <p>Mở Swagger UI qua ngrok URL:</p>
+                <a href="#" onclick="openNgrokSwagger()" class="btn btn-warning">📖 Mở Swagger UI</a>
+                <p><small>Swagger sẽ mở trong tab mới</small></p>
+            </div>
+
+            <div class="step">
+                <h3>Bước 4: Test API trực tiếp</h3>
+                <p>Test API login trực tiếp với ngrok:</p>
+                <button onclick="testNgrokLogin()" class="btn">🔐 Test Login API</button>
+                <div id="loginResult" class="status"></div>
+            </div>
+
+            <div class="step">
+                <h3>Bước 5: Alternative - Dùng localhost</h3>
+                <p>Nếu ngrok không hoạt động, dùng localhost:</p>
+                <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn btn-success">🏠 Swagger localhost</a>
+            </div>
+        </div>
+
+        <div class="ngrok-info">
+            <h3>🔧 Tips để Swagger hoạt động với ngrok</h3>
+            <ol>
+                <li><strong>Luôn bypass warning trước:</strong> Vào ngrok URL chính trước khi test</li>
+                <li><strong>Thêm header:</strong> <code>ngrok-skip-browser-warning: true</code></li>
+                <li><strong>Dùng HTTPS:</strong> Ngrok cung cấp HTTPS miễn phí</li>
+                <li><strong>Restart app:</strong> Nếu thay đổi ngrok URL, restart Spring Boot</li>
+                <li><strong>Clear cache:</strong> Xóa cache browser nếu gặp vấn đề</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const NGROK_BASE_URL = 'https://c86f-171-243-49-222.ngrok-free.app';
+
+        function openNgrokHome() {
+            window.open(NGROK_BASE_URL, '_blank');
+            showStatus('corsResult', '📌 Đã mở trang chủ ngrok. Nhấn "Visit Site" để bypass warning!', 'success');
+        }
+
+        function openNgrokSwagger() {
+            const swaggerUrl = `${NGROK_BASE_URL}/swagger-ui.html`;
+            window.open(swaggerUrl, '_blank');
+            showStatus('corsResult', '📖 Đã mở Swagger UI với ngrok. Kiểm tra tab mới!', 'success');
+        }
+
+        async function testNgrokCors() {
+            showStatus('corsResult', '🔄 Đang test CORS với ngrok...', 'success');
+
+            try {
+                const response = await fetch(`${NGROK_BASE_URL}/api/cors-test/ping`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('corsResult', '✅ CORS test thành công! Ngrok hoạt động bình thường.', 'success');
+                } else {
+                    showStatus('corsResult', `❌ CORS test thất bại: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus('corsResult', `❌ CORS test lỗi: ${error.message}. Hãy bypass ngrok warning trước!`, 'error');
+            }
+        }
+
+        async function testNgrokLogin() {
+            showStatus('loginResult', '🔄 Đang test API login với ngrok...', 'success');
+
+            const loginData = {
+                email: 'admin@smokingcessation.com',
+                password: 'Admin@123',
+                role: 1,
+                rememberMe: false
+            };
+
+            try {
+                const response = await fetch(`${NGROK_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('loginResult', '✅ Login API thành công! Token: ' + data.token.substring(0, 20) + '...', 'success');
+                } else {
+                    const errorText = await response.text();
+                    showStatus('loginResult', `❌ Login thất bại: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                showStatus('loginResult', `❌ Login lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+            element.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Test connection khi trang load
+        window.addEventListener('load', () => {
+            console.log('Ngrok Swagger Test Helper loaded');
+            setTimeout(() => {
+                showStatus('corsResult', '💡 Nhấn "Test CORS" để kiểm tra kết nối ngrok', 'success');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
+

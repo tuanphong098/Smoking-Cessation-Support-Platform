@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo URL VNPay Mới</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .url-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .test-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Tạo URL VNPay Mới</h1>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="userId">User ID:</label>
+                <input type="number" id="userId" name="userId" value="1" required>
+                <small>ID của người dùng trong database</small>
+            </div>
+
+            <div class="form-group">
+                <label for="packageId">Package ID:</label>
+                <select id="packageId" name="packageId" required>
+                    <option value="1">Gói Cơ Bản - 10,000 VND</option>
+                    <option value="2">Gói Tiêu Chuẩn - 25,000 VND</option>
+                    <option value="3">Gói Premium - 50,000 VND</option>
+                    <option value="4">Gói Test - 5,000 VND</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="bankCode">Ngân hàng:</label>
+                <select id="bankCode" name="bankCode">
+                    <option value="">Cổng thanh toán VNPay</option>
+                    <option value="NCB">NCB - Ngân hàng NCB</option>
+                    <option value="AGRIBANK">AGRIBANK - Agribank</option>
+                    <option value="SCB">SCB - Sacombank</option>
+                    <option value="ACB">ACB - Ngân hàng ACB</option>
+                    <option value="TCB">TCB - Techcombank</option>
+                    <option value="BIDV">BIDV - Ngân hàng BIDV</option>
+                    <option value="VIETINBANK">VIETINBANK - Vietinbank</option>
+                    <option value="VIETCOMBANK">VIETCOMBANK - Vietcombank</option>
+                </select>
+            </div>
+
+            <button type="button" class="btn" onclick="createNewPaymentUrl()">Tạo URL thanh toán mới</button>
+        </form>
+
+        <div id="result" class="result"></div>
+
+        <div class="test-info">
+            <h3>📝 Lưu ý quan trọng</h3>
+            <ul>
+                <li><strong>URL VNPay có thời hạn 15 phút</strong> từ lúc tạo</li>
+                <li><strong>Chỉ sử dụng thông tin thẻ test</strong> trong môi trường Sandbox</li>
+                <li><strong>Số thẻ test:</strong> 9704198526191432198</li>
+                <li><strong>Tên chủ thẻ:</strong> NGUYEN VAN A</li>
+                <li><strong>Ngày hết hạn:</strong> 07/15</li>
+                <li><strong>Mã OTP:</strong> 123456</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function createNewPaymentUrl() {
+            const userId = document.getElementById('userId').value;
+            const packageId = document.getElementById('packageId').value;
+            const bankCode = document.getElementById('bankCode').value;
+
+            const resultDiv = document.getElementById('result');
+
+            try {
+                showResult('Đang tạo URL thanh toán mới...', 'success');
+
+                // Gọi API tạo thanh toán mới
+                const url = `/api/payment-debug/test-payment-url?packageId=${packageId}&userId=${userId}&bankCode=${bankCode}`;
+
+                // Mở trong tab mới
+                window.open(url, '_blank');
+
+                showResult('✅ Đã mở trang tạo URL thanh toán mới trong tab mới!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('❌ Lỗi: ' + error.message, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    resultDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Test kết nối server
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/payment/packages');
+                if (response.ok) {
+                    console.log('✅ Server đang chạy và sẵn sàng');
+                } else {
+                    showResult('⚠️ Server có vấn đề, hãy khởi động lại ứng dụng', 'error');
+                }
+            } catch (error) {
+                showResult('❌ Không thể kết nối server. Hãy đảm bảo ứng dụng đang chạy trên port 8080', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
+

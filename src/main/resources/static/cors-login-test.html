@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Login - CORS Fix</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn-test {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .admin-section {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #ffeaa7;
+        }
+        .test-accounts {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test API Login - CORS Fix</h1>
+
+        <!-- Test CORS Connection -->
+        <div class="form-group">
+            <button class="btn btn-test" onclick="testCorsConnection()">Test CORS Connection</button>
+        </div>
+
+        <!-- Admin Login Section -->
+        <div class="admin-section">
+            <h3>👨‍💼 Admin Login (Sẵn có)</h3>
+            <button class="btn" onclick="loginAsAdmin()">Đăng nhập Admin</button>
+        </div>
+
+        <!-- Manual Login Form -->
+        <h3>🔐 Manual Login Test</h3>
+        <form id="loginForm" onsubmit="testLogin(event)">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="admin@smokingcessation.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="Admin@123" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role" required>
+                    <option value="1">Admin (1)</option>
+                    <option value="2">Member (2)</option>
+                    <option value="3">Coach (3)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn">Test Login API</button>
+        </form>
+
+        <!-- Test Register -->
+        <h3>📝 Test Register API</h3>
+        <button class="btn btn-test" onclick="testRegister()">Test Register với dữ liệu mẫu</button>
+
+        <!-- Test Info -->
+        <div class="test-accounts">
+            <h3>📋 Thông tin test</h3>
+            <p><strong>Admin account:</strong></p>
+            <ul>
+                <li>Email: admin@smokingcessation.com</li>
+                <li>Password: Admin@123</li>
+                <li>Role: 1 (Admin)</li>
+            </ul>
+            <p><strong>Base URL:</strong> <span id="baseUrl">http://localhost:8080</span></p>
+        </div>
+
+        <!-- Result Display -->
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080';
+
+        // Update base URL display
+        document.getElementById('baseUrl').textContent = BASE_URL;
+
+        async function testCorsConnection() {
+            showResult('Testing CORS connection...', 'info');
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/cors-test/ping`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ CORS test successful!\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ CORS test failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ CORS test failed: ${error.message}\n\nPossible causes:\n- Server not running\n- CORS not configured\n- Network issue`, 'error');
+            }
+        }
+
+        async function loginAsAdmin() {
+            const loginData = {
+                email: 'admin@smokingcessation.com',
+                password: 'Admin@123',
+                role: 1,
+                rememberMe: false
+            };
+
+            await performLogin(loginData);
+        }
+
+        async function testLogin(event) {
+            event.preventDefault();
+
+            const loginData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: parseInt(document.getElementById('role').value),
+                rememberMe: false
+            };
+
+            await performLogin(loginData);
+        }
+
+        async function performLogin(loginData) {
+            showResult(`Sending login request...\nData: ${JSON.stringify(loginData, null, 2)}`, 'info');
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const responseText = await response.text();
+                let responseData;
+
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = responseText;
+                }
+
+                if (response.ok) {
+                    showResult(`✅ Login successful!\n\nResponse:\n${JSON.stringify(responseData, null, 2)}\n\nToken: ${responseData.token}`, 'success');
+
+                    // Test với token
+                    if (responseData.token) {
+                        setTimeout(() => testWithToken(responseData.token), 1000);
+                    }
+                } else {
+                    showResult(`❌ Login failed: ${response.status} ${response.statusText}\n\nResponse:\n${JSON.stringify(responseData, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Login request failed: ${error.message}\n\nThis is likely a CORS or network issue.`, 'error');
+            }
+        }
+
+        async function testRegister() {
+            const registerData = {
+                email: `test${Date.now()}@example.com`,
+                password: 'TestPassword123',
+                confirmPassword: 'TestPassword123',
+                fullName: 'Test User',
+                phone: '0912345678',
+                role: 2
+            };
+
+            showResult(`Testing register API...\nData: ${JSON.stringify(registerData, null, 2)}`, 'info');
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(registerData)
+                });
+
+                const responseText = await response.text();
+
+                if (response.ok) {
+                    showResult(`✅ Register successful!\n\nResponse: ${responseText}`, 'success');
+                } else {
+                    showResult(`❌ Register failed: ${response.status} ${response.statusText}\n\nResponse: ${responseText}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Register request failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWithToken(token) {
+            showResult(`Testing authenticated API with token...`, 'info');
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/test/token-info`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ Token test successful!\n\nToken info:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ Token test failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Token test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+
+            // Scroll to result
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Test connection on page load
+        window.addEventListener('load', () => {
+            setTimeout(testCorsConnection, 500);
+        });
+    </script>
+</body>
+</html>
+

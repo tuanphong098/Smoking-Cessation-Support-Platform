@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VNPay Quick Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .payment-url {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #495057;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+
+        .test-info {
+            background: #e8f4f8;
+            border-left: 5px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .test-info h3 {
+            color: #17a2b8;
+            margin-bottom: 15px;
+        }
+
+        .card-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .card-info h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .card-data {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .transaction-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-item h4 {
+            color: #495057;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .info-item p {
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 VNPay Quick Test</h1>
+
+        <div class="transaction-info">
+            <div class="info-item">
+                <h4>Số tiền</h4>
+                <p>99,000 VND</p>
+            </div>
+            <div class="info-item">
+                <h4>Ngân hàng</h4>
+                <p>NCB</p>
+            </div>
+            <div class="info-item">
+                <h4>Mã giao dịch</h4>
+                <p>659871799681</p>
+            </div>
+            <div class="info-item">
+                <h4>Thời gian</h4>
+                <p>15 phút</p>
+            </div>
+        </div>
+
+        <div class="payment-url" id="paymentUrl">https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=9900000&vnp_BankCode=NCB&vnp_Command=pay&vnp_CreateDate=20250627022627&vnp_CurrCode=VND&vnp_ExpireDate=20250627024127&vnp_IpAddr=0%3A0%3A0%3A0%3A0%3A0%3A0%3A1&vnp_Locale=vn&vnp_OrderInfo=Thanh+toan+Gi+C+Bn&vnp_OrderType=190000&vnp_ReturnUrl=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fpayment%2Fvnpay-return&vnp_TmnCode=2QXUI4LC&vnp_TxnRef=659871799681&vnp_Version=2.1.0&vnp_SecureHash=c3ba78464f967e3b7140dc60636ecf6e459efd48593e045254586807eba8e5b64fc4827fe47393c927ad50ed589e00a95f1934234a7f37e95beca7747f95117f</div>
+
+        <button class="btn" onclick="openPayment()">🚀 Mở trang thanh toán VNPay</button>
+        <button class="btn btn-copy" onclick="copyUrl()">📋 Copy URL</button>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="test-info">
+            <h3>📝 Thông tin thẻ test VNPay</h3>
+            <div class="card-info">
+                <h4>🏧 Thẻ ATM nội địa</h4>
+                <div class="card-data">
+                    Số thẻ: 9704198526191432198<br>
+                    Tên chủ thẻ: NGUYEN VAN A<br>
+                    Ngày hết hạn: 07/15<br>
+                    Mã OTP: 123456
+                </div>
+            </div>
+
+            <div class="card-info">
+                <h4>💳 Thẻ quốc tế</h4>
+                <div class="card-data">
+                    Số thẻ: 5123450000000008<br>
+                    Tên chủ thẻ: NGUYEN VAN A<br>
+                    Ngày hết hạn: 07/15<br>
+                    CVV: 100
+                </div>
+            </div>
+        </div>
+
+        <div class="test-info">
+            <h3>🎯 Hướng dẫn test</h3>
+            <ol style="margin-left: 20px; line-height: 1.8;">
+                <li>Nhấn nút <strong>"Mở trang thanh toán VNPay"</strong></li>
+                <li>Chọn <strong>"Thanh toán qua thẻ ATM nội địa"</strong></li>
+                <li>Nhập thông tin thẻ test ở trên</li>
+                <li>Nhấn <strong>"Thanh toán"</strong></li>
+                <li>Nhập mã OTP: <strong>123456</strong></li>
+                <li>Nhấn <strong>"Xác nhận"</strong></li>
+                <li>Kiểm tra kết quả tại <code>localhost:8080/api/payment/vnpay-return</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function openPayment() {
+            const url = document.getElementById('paymentUrl').textContent;
+            window.open(url, '_blank');
+            showStatus('Đã mở trang thanh toán VNPay trong tab mới!', 'success');
+        }
+
+        function copyUrl() {
+            const url = document.getElementById('paymentUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                showStatus('Đã copy URL vào clipboard!', 'success');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus('Đã copy URL vào clipboard!', 'success');
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Auto-hide status on page load
+        window.addEventListener('load', () => {
+            console.log('VNPay Quick Test loaded successfully!');
+        });
+    </script>
+</body>
+</html>
+

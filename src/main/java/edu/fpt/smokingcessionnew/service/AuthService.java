@@ -56,18 +56,13 @@ public class AuthService {
         user.setPhone(request.getPhone());
         user.setRole(request.getRole()); // Sử dụng vai trò từ request (2=Member hoặc 3=Coach)
         user.setStatus(0); // 0 = Inactive (chưa xác thực)
-        user.setCreatedDate(LocalDateTime.now()); // Đã thay đổi từ Instant.now() sang LocalDateTime.now()
+        user.setCreatedDate(LocalDateTime.now());
 
-        // Bỏ qua các trường không tồn tại trong DB
-        // user.setEmailVerified(false);
-        // user.setVerificationToken(verificationToken);
-        // user.setTokenExpiryDate(LocalDateTime.now().plusHours(24));
-
-        // Tạo token xác thực email nhưng lưu trong bộ nhớ tạm hoặc redis/cache thay vì DB
+        // Tạo token xác thực email và lưu vào user
         String verificationToken = UUID.randomUUID().toString();
-
-        // Lưu token vào một nơi khác, hoặc sử dụng thêm bảng riêng cho xác thực
-        // Ví dụ có thể lưu vào cache/Redis với key là email của user
+        user.setVerificationToken(verificationToken);
+        user.setTokenExpiryDate(LocalDateTime.now().plusHours(24)); // Token có hiệu lực trong 24 giờ
+        user.setEmailVerified(false);
 
         User savedUser = userRepository.save(user);
 

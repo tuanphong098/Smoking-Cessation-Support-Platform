@@ -110,4 +110,66 @@ public class EmailService {
             logger.error("Unexpected error when sending email: {}", e.getMessage());
         }
     }
+
+    public void sendSimpleEmail(String to, String subject, String content) {
+        if (devMode) {
+            logger.info("DEV MODE: Simulating email sent to: {}", to);
+            logger.info("Subject: {}", subject);
+            logger.info("Content: {}", content);
+            return;
+        }
+
+        try {
+            if (javaMailSender == null) {
+                logger.error("JavaMailSender not configured. Email not sent.");
+                return;
+            }
+
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(content, false); // false = plain text
+
+            javaMailSender.send(message);
+            logger.info("Simple email sent successfully to: {}", to);
+        } catch (MessagingException e) {
+            logger.error("Failed to send simple email: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error when sending simple email: {}", e.getMessage());
+        }
+    }
+
+    public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        if (devMode) {
+            logger.info("DEV MODE: Simulating HTML email sent to: {}", to);
+            logger.info("Subject: {}", subject);
+            logger.info("HTML Content: {}", htmlContent);
+            return;
+        }
+
+        try {
+            if (javaMailSender == null) {
+                logger.error("JavaMailSender not configured. Email not sent.");
+                return;
+            }
+
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true); // true = HTML content
+
+            javaMailSender.send(message);
+            logger.info("HTML email sent successfully to: {}", to);
+        } catch (MessagingException e) {
+            logger.error("Failed to send HTML email: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error when sending HTML email: {}", e.getMessage());
+        }
+    }
 }

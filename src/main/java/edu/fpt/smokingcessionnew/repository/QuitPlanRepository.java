@@ -15,4 +15,10 @@ public interface QuitPlanRepository extends JpaRepository<QuitPlan, Integer> {
     List<QuitPlan> findByUserAndStatus(User user, Integer status);
     List<QuitPlan> findByTargetQuitDateBetween(LocalDate startDate, LocalDate endDate);
     Optional<QuitPlan> findTopByUserOrderByCreatedDateDesc(User user);
+
+    // Methods for coach to view member plans
+    List<QuitPlan> findByCoach(User coach);
+    List<QuitPlan> findByCoachAndStatus(User coach, Integer status);
+    List<QuitPlan> findByCoachOrderByCreatedDateDesc(User coach);
+    List<QuitPlan> findByCoachAndStatusOrderByCreatedDateDesc(User coach, Integer status);
 }
